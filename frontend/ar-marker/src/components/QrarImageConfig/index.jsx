@@ -1,160 +1,59 @@
 import React, { useState } from 'react';
-import { Accordion, Card, Alert, Button, Collapse, Form, FormControl, Nav, Navbar, NavDropdown, Spinner } from 'react-bootstrap';
+import { Accordion, Card, Alert, Button, Collapse, Form, FormControl, Nav, Navbar, NavDropdown, Spinner, Tabs, Tab } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import 'styles/common.css';
 import ImgurPanel from '../ImgurPanel';
 import { bytesToSize } from 'utils/byteUtil';
+import validator from 'validator';
+import ImageSelectionPanel from './ImageSelectionPanel';
+import ImageConfigurationPanel from './ImageConfigurationPanel';
 
 const DEFAULT_MARKER_CONFIG = {
     position: { x: 0, y: 0, z: 0 },
     rotation: { x: -90, y: 0, z: 0 },
     size: { width: 1, height: 1 },
-    opacity: 1,
-    useRandomBarcodeValue: true,
-    customBarcodeValue: 1
+    display: { opacity:1 },
+    barcode: { useCustomBarcodeValue: false, customBarcodeValue: 1}
 };
 
 const ValueOrMinMax = (value, min, max) => {
     return Math.max(Math.min(Number(value), Number(max)), Number(min));
 }
 
+
 const QrarImageConfig = (props) => {
-    const [imageUrl, setImageUrl] = useState(null);
-    const [position, setPosition] = useState(DEFAULT_MARKER_CONFIG.position);
-    const [rotation, setRotation] = useState(DEFAULT_MARKER_CONFIG.rotation);
-    const [size, setSize] = useState(DEFAULT_MARKER_CONFIG.size);
-    const [opacity, setOpacity] = useState(DEFAULT_MARKER_CONFIG.opacity);
-    const [useRandomBarcodeValue, setUseRandomBarcodeValue] = useState(DEFAULT_MARKER_CONFIG.useRandomBarcodeValue);
-    const [customBarcodeValue, setCustomBarcodeValue] = useState(DEFAULT_MARKER_CONFIG.customBarcodeValue);
+    const [imageUrl, setImageUrl] = useState();
+    const [configuration, setConfiguration] = useState(DEFAULT_MARKER_CONFIG);
 
     const createImageMarker = async (imageUrl) => {
 
-        const configuration = {
+        const markerConfiguration = {
             type: 'image',
             imageUrl: imageUrl,
-            position: position,
-            rotation: rotation,
-            size: size,
-            opacity: opacity,
-            barcodeValue: useRandomBarcodeValue === true ? undefined : customBarcodeValue
+            position: configuration.position,
+            rotation: configuration.rotation,
+            size: configuration.size,
+            opacity: configuration.opacity,
+            barcodeValue: configuration.barcode.useCustomBarcodeValue ? configuration.barcode.customBarcodeValue : undefined 
         };
 
-        await props.createMarker(configuration);
+        await props.createMarker(markerConfiguration);
     }
 
-    const resetInputs = () => {
-        setPosition(DEFAULT_MARKER_CONFIG.position);
-        setRotation(DEFAULT_MARKER_CONFIG.rotation);
-        setSize(DEFAULT_MARKER_CONFIG.size);
-        setOpacity(DEFAULT_MARKER_CONFIG.opacity);
-        setUseRandomBarcodeValue(DEFAULT_MARKER_CONFIG.useRandomBarcodeValue);
-        setCustomBarcodeValue(DEFAULT_MARKER_CONFIG.customBarcodeValue);
-    }
-
-    const maxFileSize = 20000000; // 20 MB
+    //<input className="form-control" type="number" id="width" name="width" step="0.01" onChange={event => setSize({ ...size, width: ValueOrMinMax(event.target.value, 0.01, 999) })} value={size.width} />
+                            
 
     return (
         <div>
-            <ImgurPanel 
-                clientId={process.env.REACT_APP_IMGUR_CLIENT_ID}
-                accept={"image/png, image/jpeg, image/gif"}
-                maxFileSize={maxFileSize}
-                onDrop={()=>{setImageUrl(null)}} 
-                onUploadedFileUrl={(filename)=>setImageUrl(filename)}>
-                <p>Drag and drop a file into this area or click to select a file</p>
-                <ul>
-                    <li>Supported file types: PNG, JPEG, GIF</li>
-                    <li>Max filesize: {bytesToSize(maxFileSize)}</li>
-                </ul>
-            </ImgurPanel>
-
-            <h3>Image Configuration:</h3>
-            <Accordion defaultActiveKey="-1" style={{ maxWidth: "400px" }}>
-                <Card>
-                    <Accordion.Toggle as={Card.Header} eventKey="0">
-                        Size
-                        </Accordion.Toggle>
-                    <Accordion.Collapse eventKey="0">
-                        <Card.Body>
-                            <div className="input-group">
-                                <div className="input-group-prepend"><span className="input-group-text" id="">Width:</span></div>
-                                <input className="form-control" type="number" id="width" name="width" step="0.01" onChange={event => setSize({ ...size, width: ValueOrMinMax(event.target.value, 0.01, 999) })} value={size.width} />
-                                <div className="input-group-prepend"><span className="input-group-text" id="">Height:</span></div>
-                                <input className="form-control" type="number" id="width" name="height" step="0.01" onChange={event => setSize({ ...size, height: ValueOrMinMax(event.target.value, 0.01, 999) })} value={size.height} />
-                            </div>
-                        </Card.Body>
-                    </Accordion.Collapse>
-                </Card>
-                <Card>
-                    <Accordion.Toggle as={Card.Header} eventKey="1">
-                        Position
-                        </Accordion.Toggle>
-                    <Accordion.Collapse eventKey="1">
-                        <Card.Body>
-                            <div className="input-group">
-                                <div className="input-group-prepend"><span className="input-group-text" id="">X:</span></div>
-                                <input className="form-control" type="number" id="positionX" name="positionX" step="0.01" onChange={event => setPosition({ ...position, x: ValueOrMinMax(event.target.value, -999, 999) })} value={position.x} />
-                                <div className="input-group-prepend"><span className="input-group-text" id="">Y:</span></div>
-                                <input className="form-control" type="number" id="positionY" name="positionY" step="0.01" onChange={event => setPosition({ ...position, y: ValueOrMinMax(event.target.value, -999, 999) })} value={position.y} />
-                                <div className="input-group-prepend"><span className="input-group-text" id="">Z:</span></div>
-                                <input className="form-control" type="number" id="positionZ" name="positionZ" step="0.01" onChange={event => setPosition({ ...position, z: ValueOrMinMax(event.target.value, -999, 999) })} value={position.z} />
-                            </div>
-                        </Card.Body>
-                    </Accordion.Collapse>
-                </Card>
-                <Card>
-                    <Accordion.Toggle as={Card.Header} eventKey="2">
-                        Rotation
-                        </Accordion.Toggle>
-                    <Accordion.Collapse eventKey="2">
-                        <Card.Body>
-                            <div className="input-group">
-                                <div className="input-group-prepend"><span className="input-group-text" id="">X:</span></div>
-                                <input className="form-control" type="number" id="rotationX" name="positionX" step="0.01" onChange={event => setRotation({ ...rotation, x: ValueOrMinMax(event.target.value, -999, 999) })} value={rotation.x} />
-                                <div className="input-group-prepend"><span className="input-group-text" id="">Y:</span></div>
-                                <input className="form-control" type="number" id="rotationY" name="positionY" step="0.01" onChange={event => setRotation({ ...rotation, y: ValueOrMinMax(event.target.value, -999, 999) })} value={rotation.y} />
-                                <div className="input-group-prepend"><span className="input-group-text" id="">Z:</span></div>
-                                <input className="form-control" type="number" id="rotationZ" name="positionZ" step="0.01" onChange={event => setRotation({ ...rotation, z: ValueOrMinMax(event.target.value, -999, 999) })} value={rotation.z} />
-                            </div>
-                        </Card.Body>
-                    </Accordion.Collapse>
-                </Card>
-                <Card>
-                    <Accordion.Toggle as={Card.Header} eventKey="3">
-                        Display
-                        </Accordion.Toggle>
-                    <Accordion.Collapse eventKey="3">
-                        <Card.Body>
-                            <div className="input-group">
-                                <div className="input-group-prepend"><span className="input-group-text" id="">Opacity:</span></div>
-                                <input className="form-control" type="number" id="opacity" name="opacity" step="0.01" onChange={event => setOpacity(ValueOrMinMax(event.target.value, 0, 1))} value={opacity} />
-                            </div>
-                        </Card.Body>
-                    </Accordion.Collapse>
-                </Card>
-                <Card>
-                    <Accordion.Toggle as={Card.Header} eventKey="4">
-                        Barcode
-                        </Accordion.Toggle>
-                    <Accordion.Collapse eventKey="4">
-                        <Card.Body>
-                            <div className="input-group">
-                                <div className="input-group-prepend">
-                                    <div className="input-group-text">
-                                        <input type="checkbox" id="barcodeValueCustom" name="barcodeType" onChange={event => setUseRandomBarcodeValue(!useRandomBarcodeValue)} checked={!useRandomBarcodeValue} />
-                                        <span>Custom Value:</span>
-                                    </div>
-                                </div>
-                                <input className="form-control" disabled={useRandomBarcodeValue} type="number" id="barcodeValue" name="barcodeValue" step="1" onChange={event => setCustomBarcodeValue(ValueOrMinMax(event.target.value, process.env.REACT_APP_BARCODES_VALUE_MIN, process.env.REACT_APP_BARCODES_VALUE_MAX))} value={customBarcodeValue} />
-                            </div>
-                        </Card.Body>
-                    </Accordion.Collapse>
-                </Card>
-            </Accordion>
+            <h3>Select Media:</h3>
+            <ImageSelectionPanel imageUrl={imageUrl} setImageUrl={setImageUrl} />
+            
+            <h3>Configuration:</h3>
+            <ImageConfigurationPanel configuration={configuration} setConfiguration={setConfiguration} />            
 
             <br />
             <br />
-            <Button type="button" className="btn btn-primary" disabled={(imageUrl === null)} onClick={async () => await createImageMarker(imageUrl)}>Generate Marker</Button>
+            <Button type="button" className="btn btn-primary" disabled={(imageUrl === undefined)} onClick={async () => await createImageMarker(imageUrl)}>Generate Marker</Button>
         </div>
     );
 }

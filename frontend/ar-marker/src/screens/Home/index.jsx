@@ -4,6 +4,7 @@ import QrarMarkerGenerator from 'api/QrarMarkerGenerator';
 
 import 'styles/common.css';
 import QrarVideoConfig from 'components/QrarVideoConfig';
+import { Tab, Tabs } from 'react-bootstrap';
 
 const Home = () => {
   const [loading, setLoading] = useState(false);
@@ -34,8 +35,9 @@ const Home = () => {
         <h1>
           Home
         </h1>
-        <QrarImageConfig createMarker={async (configuration) => await createMarker(configuration)} />
-
+        <div style={{width:'450px'}}>
+          <QrarImageConfig createMarker={async (configuration) => await createMarker(configuration)} /> 
+        </div>
         <hr />
         {(loading && (<span>Loading</span>))}
 
