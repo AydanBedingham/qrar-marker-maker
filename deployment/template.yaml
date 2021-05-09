@@ -19,11 +19,13 @@ Resources:
     Properties:
       Name: !Sub ${AWS::StackName}-qrar-api
       StageName: Prod
+      Auth:
+        ApiKeyRequired: false
 
   ShortenUrlFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Sub ${AWS::StackName}-shorten-url-func
+      FunctionName: !Sub ${AWS::StackName}-qrar-shorten-url-func
       CodeUri: ../backend/shorten-url
       Handler: index.handler
       Runtime: nodejs12.x
@@ -31,29 +33,38 @@ Resources:
         HelloGfmiApi:
           Type: Api
           Properties:
-            Path: /shorten-url
+            Path: /api/shorten-url
             Method: POST
             RestApiId: !Ref QrarApi
 
-  Bucket:
+  FrontendBucket:
     Type: AWS::S3::Bucket
     Properties:
         AccessControl: Private
-        BucketName: !Sub ${AWS::StackName}-private-bucket
+        BucketName: !Sub ${AWS::StackName}-qrar-frontend-bucket
         Tags:
             - Key: description
-              Value: "Private files"
+              Value: "Stores Web files for QRAR Frontend"
+
+  PlayBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+        AccessControl: Private
+        BucketName: !Sub ${AWS::StackName}-qrar-play-bucket
+        Tags:
+            - Key: description
+              Value: "Stores Web files for QRAR Play"
 
   CloudFrontOriginIdentity:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
     Properties:
       CloudFrontOriginAccessIdentityConfig:
-        Comment: 'origin identity'
+        Comment: 'Origin Access Identity for QRAR Frontend'
 
-  BucketPolicy:
+  FrontendBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
-      Bucket: !Ref Bucket
+      Bucket: !Ref FrontendBucket
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -64,30 +75,99 @@ Resources:
             Resource: !Join
               - ''
               - - 'arn:aws:s3:::'
-                - !Ref Bucket
+                - !Ref FrontendBucket
                 - /*
 
-  PublicDistribution:
+  PlayBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref PlayBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginIdentity}'
+            Action: 's3:GetObject'
+            Resource: !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref PlayBucket
+                - /*
+
+  FrontendDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
         Origins:
-          - DomainName:
-              !Sub '${Bucket}.s3.amazonaws.com'
-            Id: S3-private-bucket
+          - Id: S3-frontend-bucket
+            DomainName: !Sub '${FrontendBucket}.s3.amazonaws.com'
             S3OriginConfig:
               OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginIdentity}'
-        Enabled: 'true'
-        Comment: Some comment
+          - Id: S3-play-bucket
+            DomainName: !Sub '${PlayBucket}.s3.amazonaws.com'
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginIdentity}'
+          - Id: Api-shorten-url
+            DomainName: !Sub '${QrarApi}.execute-api.${AWS::Region}.amazonaws.com'
+            OriginPath: '/Prod'
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: https-only
+        Enabled: true
+        Comment: CloudFront Distribution for Qrar Frontend
         DefaultCacheBehavior:
           AllowedMethods:
             - GET
             - HEAD
-          TargetOriginId: S3-private-bucket
+          TargetOriginId: S3-frontend-bucket
           ForwardedValues:
-            QueryString: 'false'
+            QueryString: false
             Cookies:
               Forward: none
           ViewerProtocolPolicy: redirect-to-https
+        DefaultRootObject: 'index.html'
+        CustomErrorResponses:
+        - ErrorCode: 403
+          ResponsePagePath: "/index.html"
+          ResponseCode: 200
+        CacheBehaviors:
+          - PathPattern: '/api*/*'
+            TargetOriginId: Api-shorten-url
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - HEAD
+              - DELETE
+              - POST
+              - GET
+              - OPTIONS
+              - PUT
+              - PATCH
+            ForwardedValues:
+              QueryString: true
+          - PathPattern: '/play*/*'
+            TargetOriginId: Api-shorten-url
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - HEAD
+              - DELETE
+              - POST
+              - GET
+              - OPTIONS
+              - PUT
+              - PATCH
+            ForwardedValues:
+              QueryString: true
         ViewerCertificate:
-          CloudFrontDefaultCertificate: 'true'
+          CloudFrontDefaultCertificate: true
+
+Outputs:
+
+  FrontendUrl:
+    Description: 'Frontend URL'
+    Value: !GetAtt FrontendDistribution.DomainName
+
+  ShortenUrlApiUrl:
+    Description: 'URL'
+    Value: !Sub 'https://${QrarApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/shorten-url'
