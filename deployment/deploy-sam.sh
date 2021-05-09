@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+cfn-lint template.yaml
+
 export StackName=${2:-`echo "qrar"`}
 export Region=us-east-2
 export S3bucket=temp-bucket12345
