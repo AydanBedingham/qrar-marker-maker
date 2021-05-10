@@ -1,23 +1,31 @@
 #!/bin/bash
 set -e
 
-cfn-lint template.yaml
+DEFAULT_STACK_NAME="qrar"
+Region=us-east-2
+S3bucket=temp-bucket12345
 
-export StackName=${2:-`echo "qrar"`}
-export Region=us-east-2
-export S3bucket=temp-bucket12345
+cfn-lint template.yaml
 
 # show help
 [ $# -eq 0 ] && echo "Usage: $0 action" && exit 1
 
 # get act from argument 1
-export act=$1
+act=$1
 case $act in
   c) Action=create-stack;;
   d) Action=delete-stack;;
   u) Action=update-stack;;
   *) echo "unknown action $act  valid actions are c, d, or u   Usage: $0 action" exit 1 ;;
 esac
+
+if [ -n "$2" ]; then
+  StackName=$2
+else
+  read -p "Enter the StackName [$DEFAULT_STACK_NAME]: " line
+  StackName=${line:-`echo $DEFAULT_STACK_NAME`}
+fi
+
 
 if [ "$Action" == "delete-stack" ]; then
     # delete from CloudFormation
@@ -29,6 +37,7 @@ if [ "$Action" == "delete-stack" ]; then
     sleep 5
 
     aws cloudformation wait stack-delete-complete \
+      --region $Region \
       --stack-name $StackName
 
     exit 0
@@ -60,18 +69,23 @@ sleep 5
 if [ "$Action" == "create-stack" ]; then
   # wait for create operation to complete
   aws cloudformation wait stack-create-complete \
+    --region $Region \
     --stack-name $StackName || true
 fi
 
 if [ "$Action" == "update-stack" ]; then
   # wait for update operation to complete
   aws cloudformation wait stack-update-complete \
+    --region $Region \
     --stack-name $StackName || true
 fi
 
 sleep 5
 
+#print stack outputs
+
 aws cloudformation describe-stacks \
+  --region $Region \
   --stack-name $StackName \
   --query 'Stacks[].Outputs' \
   --output text
