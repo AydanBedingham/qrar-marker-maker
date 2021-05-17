@@ -2,10 +2,8 @@
 set -e
 
 DEFAULT_STACK_NAME="qrar"
-Region=us-east-2
-S3bucket=temp-bucket12345
-
-cfn-lint template.yaml
+Region=us-east-1
+S3bucket=temp-bucket123456
 
 # show help
 [ $# -eq 0 ] && echo "Usage: $0 action" && exit 1
@@ -43,6 +41,9 @@ if [ "$Action" == "delete-stack" ]; then
     exit 0
 fi
 
+# lint sam template
+cfn-lint template.yaml
+
 # create build directory of .aws-sam
 sam build
 
@@ -50,14 +51,14 @@ sam build
 sam package \
     --s3-bucket $S3bucket \
     --s3-prefix $StackName \
-    --output-template-file sam-template.tmp \
+    --output-template-file .aws-sam/sam-template.tmp \
     --force-upload \
     --region $Region
 
 # deploy to CloudFormation
 aws cloudformation $Action \
     --stack-name $StackName \
-    --template-body file://sam-template.tmp \
+    --template-body file://.aws-sam/sam-template.tmp \
     --parameters file://parameters.json \
     --capabilities CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM \
     --region $Region
