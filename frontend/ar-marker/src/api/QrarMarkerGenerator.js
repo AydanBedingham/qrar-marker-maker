@@ -22,9 +22,8 @@ const generateQrCodeCanvas = (options) => {
     const playUrl = options.playUrl;
 
     // retrieve barcode image
-    const barCodeImage = barcodeImageGenerator.generateBarcodeImage(
-      barcodeValue
-    );
+    const barCodeImage =
+      barcodeImageGenerator.generateBarcodeImage(barcodeValue);
     const barCodeSize = qrSize * barcodeRatio;
 
     var divElement = document.createElement("div");
@@ -52,9 +51,12 @@ const generatePlayUrl = async (qrarPayload) => {
   // encode QRAR payload as JWT
   const jwtToken = generateUnsignedJwtToken(qrarPayload);
 
+  var loc = window.location.href;
+  var url = loc.substring(0, loc.lastIndexOf("/"));
+
   // generate play url
   const longPlayUrl =
-    process.env.REACT_APP_PLAY_SCRIPT_URI + "?token=" + jwtToken;
+    url + process.env.REACT_APP_PLAY_SCRIPT_URI + "?token=" + jwtToken;
 
   // shortening play url
   const shortPlayUrl = await shortUrlGenerator.shortenUrl(longPlayUrl);

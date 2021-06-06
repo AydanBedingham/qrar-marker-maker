@@ -31,7 +31,7 @@ unzip $FRONTEND_DIR/barcodes.zip -d $TEMP_DIR/play/barcodes
 
 # zip contents of temp directory
 cd $TEMP_DIR
-zip -r "$OUTPUT_FILE" "./"
+zip -r "$OUTPUT_FILE" "./" -x ".*" -x "__MACOSX"
 
 # cleanup the temp directory
 rm -r "$TEMP_DIR" || true
