@@ -16,14 +16,15 @@ FRONTEND_DIR=$SCRIPT_DIR/../frontend
 # build ar-marker project
 cd $FRONTEND_DIR/ar-marker
 rm -r $FRONTEND_DIR/ar-marker/build/ || true
+npm install
 npm run build
 
 # copy ar-marker build files to temp directory
-cp -r "$FRONTEND_DIR/ar-marker/build/" "$TEMP_DIR/"
+cp -r "$FRONTEND_DIR/ar-marker/build/." "$TEMP_DIR/"
 
 # copy play page to temp directory
 mkdir -p "$TEMP_DIR/play"
-cp -r "$FRONTEND_DIR/play/" "$TEMP_DIR/play"
+cp -r "$FRONTEND_DIR/play/." "$TEMP_DIR/play"
 
 # unzip barcodes to temp directory
 mkdir -p $TEMP_DIR/play/barcodes

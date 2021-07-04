@@ -57,8 +57,6 @@ aws cloudformation $Action \
     --stack-name $StackName \
     --region $Region \
     --template-body file://.aws-sam/sam-template.tmp
-    #--parameters ParameterKey="ArtifactBucketName",ParameterValue="$ArtifactBucketName" \
-    #--parameters file://parameters.json \
 
 echo "Waiting for operation to complete..." && \
 
