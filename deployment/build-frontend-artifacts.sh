@@ -26,9 +26,13 @@ cp -r "$FRONTEND_DIR/ar-marker/build/." "$TEMP_DIR/"
 mkdir -p "$TEMP_DIR/play"
 cp -r "$FRONTEND_DIR/play/." "$TEMP_DIR/play"
 
-# unzip barcodes to temp directory
-mkdir -p $TEMP_DIR/play/barcodes
-unzip $FRONTEND_DIR/barcodes.zip -d $TEMP_DIR/play/barcodes
+# unzip 4x4 barcodes to temp directory
+mkdir -p $TEMP_DIR/barcodes/4x4_BCH_13_9_3
+unzip $FRONTEND_DIR/barcodes/4x4_BCH_13_9_3.zip -d $TEMP_DIR/barcodes/4x4_BCH_13_9_3
+
+# unzip 3x3 barcodes to temp directory
+#mkdir -p $TEMP_DIR/barcodes/3x3
+#unzip $FRONTEND_DIR/barcodes/3x3.zip -d $TEMP_DIR/barcodes/3x3
 
 # zip contents of temp directory
 cd $TEMP_DIR

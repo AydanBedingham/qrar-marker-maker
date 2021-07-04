@@ -7,12 +7,14 @@ import { generateQrarPayload } from "utils/qrar-payload-util";
 const barcodeImageGenerator = new BarCodeImageGenerator(
   process.env.REACT_APP_BARCODES_URI,
   process.env.REACT_APP_BARCODES_VALUE_MIN,
-  process.env.REACT_APP_BARCODES_VALUE_MAX
+  process.env.REACT_APP_BARCODES_VALUE_MAX,
+  process.env.REACT_APP_BARCODES_VALUE_MASK
 );
 
 const shortUrlGenerator = new ShortUrlGenerator(
   process.env.REACT_APP_SHORTEN_URL_SCRIPT_URI
 );
+
 
 const generateQrCodeCanvas = (options) => {
   return new Promise((resolve, reject) => {
@@ -22,8 +24,9 @@ const generateQrCodeCanvas = (options) => {
     const playUrl = options.playUrl;
 
     // retrieve barcode image
-    const barCodeImage =
-      barcodeImageGenerator.generateBarcodeImage(barcodeValue);
+    const barCodeImage = barcodeImageGenerator.generateBarcodeImage(
+      barcodeValue
+    );
     const barCodeSize = qrSize * barcodeRatio;
 
     var divElement = document.createElement("div");

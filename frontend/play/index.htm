@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script type="text/javascript" src="./js/aframe/aframe.min.js"></script>
+        <script type="text/javascript" src="./js/aframe/aframe-ar.min.js"></script>
+        <script type="text/javascript" src="./js/aframe/aframe-extras.loaders.min.js"></script>
+        
+        
+    </head>
+
+    <script>
+        var loadedQrarIds = new Set();
+
+        console.log("Referrer:", document.referrer);
+
+        function determineFinalUrl(url, callback) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("HEAD", url, true);
+
+            xhr.onload = function() {
+                var status = xhr.status;
+
+                if (status === 200) {
+                    callback(xhr.responseURL, status);
+                } else {
+                    callback(undefined, status);
+                }
+            };
+
+            xhr.send(null);
+        }
+       
+
+        function createObject(obj){
+            console.log("Creating Element", obj.element);
+
+            if (obj.element === undefined){
+                console.error("Could not identify element!");
+                return;
+            }
+
+            switch(obj.element) {
+                case "a-marker":
+                    return createMarkerElement(obj);
+                default:
+                    return createCustomElement(obj);
+                }
+        }
+
+        function createCustomElement(obj) {
+            var element = document.createElement(obj.element);
+
+            var keys = Object.keys(obj);
+            delete keys['object'];
+            delete keys['children'];
+
+            for (var i = 0; i < keys.length; i++) {
+                const key = keys[i];
+                element.setAttribute(key, obj[key]);
+            }
+
+            if (obj.children !== undefined){
+                for (var i = 0; i < obj.children.length ; i++){
+                    const childElement = createObject(obj.children[i]);
+                    if (childElement !== undefined){
+                        element.appendChild(childElement);
+                    }
+                }
+            }
+
+            return element;
+        }
+
+        function createMarkerElement(obj) {
+            var keys = Object.keys(obj);
+            delete keys['object'];
+            delete keys['children'];
+
+            const value = parseInt(obj['value']);
+            console.log("Creating marker with value:", value);
+            var element = document.querySelectorAll(`a-marker[value="${value}"]`)[0];
+
+            for (var i = 0; i < keys.length; i++) {
+                const key = keys[i];
+                element.setAttribute(key, obj[key]);
+            }
+
+            element.querySelectorAll('*').forEach(n => n.remove());
+
+            if (obj.children !== undefined){
+                for (var i = 0; i < obj.children.length ; i++){
+                    const childElement = createObject(obj.children[i]);
+                    if (childElement !== undefined){
+                        element.appendChild(childElement);
+                    }
+                }
+            }
+
+            return element;
+        }
+
+
+        function getParameterByName(name, url = window.location.href) {
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(url);
+            if (!results) return undefined;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
+
+        function parseJwt(token) {
+            try {
+                return JSON.parse(atob(token.split('.')[1]));
+            } catch (e) {
+                return undefined;
+            }
+        };
+
+        function loadJwtToken(qrarId, jwtToken){
+            if (!loadedQrarIds.has(qrarId)){
+
+                loadedQrarIds.add(qrarId);
+                
+                const payload = parseJwt(jwtToken);
+                console.log("payload:", payload);
+
+                const sceneElement = document.querySelector('a-scene');
+                console.log("scene element:", sceneElement);
+                
+                const markers = payload.markers;
+                console.log("markers count:", markers.length);
+
+                for (i = 0; i < markers.length; i++) {
+                    const markerElement = createObject(markers[i]);
+                    // sceneElement.appendChild(markerElement);                   
+                }
+            } else {
+                console.log("the Qrar with this Id has already been loaded:", qrarId);
+            }
+        }
+
+        function setup() {
+            const jwtToken = getParameterByName("token");
+            const qrarId = getParameterByName("id");
+
+            
+            if (qrarId !== undefined && jwtToken !== undefined) {
+                loadJwtToken(qrarId, jwtToken);
+            }
+        }
+
+        AFRAME.registerComponent('scene', {
+                init: function () {
+                    setup();
+                }
+            });
+
+    </script>
+
+
+
+    <body style="margin : 0px; overflow: hidden;">
+
+        <div style="display:none">
+            <video id="qr-video"></video>
+        </div>
+
+        <a-scene scene id="scene" embedded vr-mode-ui="enabled: false" 
+            arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 4x4_BCH_13_9_3; labelingMode:black_region">
+            <a-entity camera></a-entity>
+        </a-scene>
+
+
+        <script>
+        
+            const sceneElement = document.getElementById("scene");
+            for (var i =0; i<100; i++){
+                const markerElement = document.createElement("a-marker");
+                markerElement.id = `marker${i}`;
+                markerElement.setAttribute("type", "barcode");
+                markerElement.setAttribute("value", ""+i);
+
+                const objElement1 = document.createElement("a-plane");
+                objElement1.setAttribute("color", "red");
+                objElement1.setAttribute("wireframe", "true");
+                objElement1.setAttribute("wireframe-linewidth", "4");
+                objElement1.setAttribute("width", 3.75);
+                objElement1.setAttribute("height", 3.75);
+                objElement1.setAttribute("rotation", '-90 0 0');
+
+                const objElement2 = document.createElement("a-plane");
+                objElement2.setAttribute("color", "red");
+                objElement2.setAttribute("wireframe", "true");
+                objElement2.setAttribute("wireframe-linewidth", "4");
+                objElement2.setAttribute("width", 1);
+                objElement2.setAttribute("height", 1);
+                objElement2.setAttribute("rotation", '0 0 0');
+
+                const objElement3 = document.createElement("a-entity");
+                objElement3.setAttribute("text", `color:red; align:center; width:15; height:15; value:${i}`);
+
+                objElement2.appendChild(objElement3);
+                objElement1.appendChild(objElement2);
+
+                markerElement.appendChild(objElement1);
+                sceneElement.appendChild(markerElement);
+            }
+
+        </script>
+
+
+        <script type="module">
+            // array of qrar's with payload requests in-progress
+            var requestedQrarIds = new Set();
+
+            import QrScanner from "./js/qr-scanner/qr-scanner.js";
+            QrScanner.WORKER_PATH = './js/qr-scanner/qr-scanner-worker.min.js';
+
+            const videoElem = document.getElementById("qr-video");
+            
+            window.setTimeout(() => {
+                //const videoElem1 = document.getElementById("qr-video");
+
+                const videoElem2 = document.getElementById("arjs-video");
+
+                qrScanner.start(videoElem2.srcObject);
+                //videoElem1.setAttribute('src', videoElem2.src);
+            }, 3000)
+            
+            const qrScanner = new QrScanner(videoElem, result => {
+                const barcodeUrl = result; // TODO: check matches tiny url scene
+                console.log("Read barcode:", result);
+
+                const qrarId = getParameterByName("id", barcodeUrl);
+
+                if (qrarId === undefined){
+                    console.log("Could not find QrarId in Barcode barcodeUrl, assuming barcode is not a Qrar");
+                    return;
+                }
+                console.log("Extracted QrarId: ", qrarId);
+
+                if (loadedQrarIds.has(qrarId)) {
+                    console.info("Qrar has already been loaded");
+                    return;
+                }
+
+                if (requestedQrarIds.has(qrarId)){
+                    console.info("Already in the process of retrieving Qrar data");
+                    return;
+                }
+
+                requestedQrarIds.add(qrarId);
+                console.log("Requesting qrar data for qrarId: ", qrarId);
+                determineFinalUrl(barcodeUrl, responseUrl => {
+                    console.log("Received qrar data for qrarId: ", qrarId);
+                    requestedQrarIds.delete(qrarId);
+
+                    const jwtToken = getParameterByName("token", responseUrl);
+                    if (jwtToken === undefined){
+                        console.log("Failed to extract JwtToken for qrarId:", qrarId);
+                        return;
+                    }
+                    loadJwtToken(qrarId, jwtToken);
+                });
+            });
+
+
+            
+        </script>
+    </body>
+
+</html>
