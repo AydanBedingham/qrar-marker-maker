@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
+import { Button } from 'react-bootstrap';
+
 import QrarImageConfig from 'components/QrarImageConfig';
 import QrarMarkerGenerator from 'api/QrarMarkerGenerator';
 
 import 'styles/common.css';
-import QrarVideoConfig from 'components/QrarVideoConfig';
-import { Tab, Tabs } from 'react-bootstrap';
 
 const Home = () => {
   const [loading, setLoading] = useState(false);
   const [marker, setMarker] = useState(null);
 
   const qrarMarkerGenerator = new QrarMarkerGenerator();
-
 
   const createMarker = async (configuration) => {
     setMarker(null);
@@ -35,18 +34,25 @@ const Home = () => {
         <h1>
           Home
         </h1>
-        <div style={{width:'450px'}}>
-          <QrarImageConfig createMarker={async (configuration) => await createMarker(configuration)} /> 
-        </div>
-        <hr />
+
         {(loading && (<span>Loading</span>))}
 
-        {(marker && (
+        {((!loading && !marker) && (
+          <div style={{width:'450px'}}>
+          <QrarImageConfig createMarker={async (configuration) => await createMarker(configuration)} /> 
+          </div>
+        ))}
+
+        {((!loading && marker) && (
+          <div>
+            <Button type="button" className="btn btn-primary" onClick={async () => setMarker(null)}>Reset</Button>
+            <hr />
             <div id="output">
-                <img src={marker.markerSrc} />
+                <img height={450} width={450} src={marker.markerSrc} />
                 <br />
-                <a href={marker.playUrl} >{marker.playUrl}</a>
+                <a target="_blank" rel='noreferrer' href={marker.playUrl} >{marker.playUrl}</a>
             </div>
+          </div>
         ))}
 
       </div>
