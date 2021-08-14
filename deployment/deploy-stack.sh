@@ -1,10 +1,13 @@
 #!/bin/bash
+# command: ./deploy-stack.sh <REGION> <ACTION> <TEMP_BUCKET> <STACK_NAME> <APP_VERSION> <ARTIFACT_BUCKET>
+# example: ./deploy-stack.sh us-east-1 c temp-bucket123456 qrar12 LATEST12 temp-bucket123456
+
 set -e
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 TEMP_DIR=$(mktemp -d -t ci-XXXXXXXXXX)
 
-# show help
+# missing parameters, show help
 [ $# -le 5 ] && echo "Usage: $0 region action tempBucket stackName webappVersion artifactBucketName" && exit 1
 
 # get act from argument 1
@@ -21,13 +24,13 @@ esac
 # get temp bucket from argument 3
 TempBucket=$3
 
-# get temp bucket from argument 4
+# get stack name from argument 4
 StackName=$4
 
-# get temp bucket from argument 5
+# get app version from argument 5
 WebappVersion=$5
 
-# get temp bucket from argument 6
+# get artifact bucket from argument 6
 ArtifactBucketName=$6
 
 # lint sam template
@@ -47,9 +50,9 @@ sam package \
     --s3-bucket $TempBucket \
     --s3-prefix $StackName \
     --output-template-file .aws-sam/sam-template.tmp \
-    --force-upload \
-    --region $Region
-
+    --region $Region \
+    --force-upload
+    
 # deploy to CloudFormation
 aws cloudformation $Action \
     --capabilities CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM \
