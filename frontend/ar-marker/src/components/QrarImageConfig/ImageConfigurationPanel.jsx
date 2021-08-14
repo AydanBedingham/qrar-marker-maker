@@ -98,7 +98,7 @@ const ImageConfigurationPanel = (props) => {
                                 <div className="input-group-prepend"><span className="input-group-text" id="">Opacity:</span></div>
                                 <input className="form-control" type="number" id="opacity" name="opacity" step="0.01"
                                     value={props.configuration.display.opacity}
-                                    onChange={event => props.setConfiguration({...props.configuration, display:{...props.configuration.rotation, opacity:ValueOrMinMax(event.target.value, 0, 1)}})} />
+                                    onChange={event => props.setConfiguration({...props.configuration, display:{...props.configuration.display, opacity:ValueOrMinMax(event.target.value, 0, 1)}})} />
 
                             </div>
                         </Card.Body>

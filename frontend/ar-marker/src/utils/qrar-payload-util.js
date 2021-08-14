@@ -21,7 +21,7 @@ const generateImageQrarPayload = (options) => {
         children: [
           {
             element: "a-plane",
-            opacity: Number(config.opacity).toFixed(3),
+            opacity: Number(config.display.opacity).toFixed(3),
             src: imageUrl,
             position: `${applyScaling(config.position.x)} ${applyScaling(
               config.position.y
