@@ -1,11 +1,5 @@
 const fetch = require('node-fetch');
 
-const corsHeaders = {
-    "Access-Control-Allow-Headers" : "Content-Type",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
-};
-
 const tinyUrl = async (url) => {
     try{
         const tinyUrl = 'https://tinyurl.com/api-create.php?' + new URLSearchParams({
@@ -37,7 +31,6 @@ exports.handler = async (event) => {
 
         return {
             statusCode: 200,
-            headers: corsHeaders,
             body: JSON.stringify(payload)
         };
 
@@ -47,7 +40,6 @@ exports.handler = async (event) => {
     
         return {
             statusCode: errorCode,
-            headers: corsHeaders,
             body: JSON.stringify({
                 error : errorStr
             })
