@@ -6,25 +6,18 @@ Description: >
   Sample SAM Template for sam-app
 
 Parameters:
-  ArtifactBucketName:
+  FrontendArtifactBucketName:
       Type: String
       Description: Name of the bucket that contains the fronted zip files
       Default: ""
 
-  WebappVersion:
+  FrontendArtifactBucketObject:
       Type: String
-      Description: Version of the frontend to deploy
+      Description: Zip file containing frontend artifacts
 
 Conditions:
-  shouldUnzipToS3: !Not [ !Equals [!Ref ArtifactBucketName, ""]]
-
-Globals:
-  Api:
-    Cors:
-      AllowMethods: "'*'"
-      AllowHeaders: "'*'"
-      AllowOrigin: "'*'"
-    
+  shouldUnzipToS3: !Not [ !Equals [!Ref FrontendArtifactBucketName, ""]]
+      
 Resources:
 
   QrarApi:
@@ -43,7 +36,7 @@ Resources:
       Handler: index.handler
       Runtime: nodejs12.x
       Events:
-        HelloGfmiApi:
+        ShortenUrlApi:
           Type: Api
           Properties:
             Path: /api/shorten-url
@@ -153,8 +146,8 @@ Resources:
       ServiceToken: !GetAtt UnzipToS3.Arn
       DistributionId: !Ref FrontendDistribution
       DestinationBucket: !Ref FrontendBucket
-      OriginBucket: !Ref ArtifactBucketName
-      OriginKey: !Join [ '', [ 'webapp/webapp_', { Ref: WebappVersion }, '.zip' ] ]
+      OriginBucket: !Ref FrontendArtifactBucketName
+      OriginKey: !Ref FrontendArtifactBucketObject
 
   UnzipToS3Role:
     Type: "AWS::IAM::Role"
@@ -175,7 +168,7 @@ Resources:
           Statement:
           - Effect: Allow
             Action: 's3:GetObject'
-            Resource: !Join [ '', [ 'arn:aws:s3:::', { Ref: ArtifactBucketName }, '/*' ] ]
+            Resource: !Join [ '', [ 'arn:aws:s3:::', { Ref: FrontendArtifactBucketName }, '/*' ] ]
           - Effect: Allow
             Action: [ 's3:GetObject', 's3:PutObject', 's3:DeleteObject' ]
             Resource: !Join [ '', [ { 'Fn::GetAtt': [ FrontendBucket, Arn ] }, '/*' ] ]

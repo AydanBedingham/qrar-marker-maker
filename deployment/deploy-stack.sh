@@ -1,19 +1,22 @@
 #!/bin/bash
-# command: ./deploy-stack.sh <REGION> <ACTION> <TEMP_BUCKET> <STACK_NAME> <APP_VERSION> <ARTIFACT_BUCKET>
-# example: ./deploy-stack.sh us-east-1 c temp-bucket123456 qrar12 LATEST12 temp-bucket123456
-
 set -e
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 TEMP_DIR=$(mktemp -d -t ci-XXXXXXXXXX)
 
-# missing parameters, show help
-[ $# -le 5 ] && echo "Usage: $0 region action tempBucket stackName webappVersion artifactBucketName" && exit 1
+# check for missing parameters
+if [ $# -ne 5 ]
+then
+    echo "Invalid parameters"
+    echo "Usage: $0 <Region> <Action> <ArtifactBucketName> <ArtifactBucketPrefix> <StackName>"
+    echo "Example: $0 us-east-1 c temp-bucket123456 release/1.03 qrar"
+    exit 1
+fi
 
-# get act from argument 1
+# get region
 Region=$1
 
-# get act from argument 2
+# get act
 Act=$2
 case $Act in
   c) Action=create-stack;;
@@ -21,45 +24,26 @@ case $Act in
   *) echo "unknown action $Act valid actions are c, or u" exit 1 ;;
 esac
 
-# get temp bucket from argument 3
-TempBucket=$3
+# get artifact bucket name
+ArtifactBucketName=$3
 
-# get stack name from argument 4
-StackName=$4
+# get artifact bucket prefix
+ArtifactBucketPrefix=$4
 
-# get app version from argument 5
-WebappVersion=$5
+# get stack name
+StackName=$5
 
-# get artifact bucket from argument 6
-ArtifactBucketName=$6
-
-# lint sam template
-cfn-lint template.yaml
-
-# build frontend artifacts
-$SCRIPT_DIR/build-frontend-artifacts.sh "$TEMP_DIR/webapp.zip"
-
-# upload build artifacts to bucket
-aws s3 cp "$TEMP_DIR/webapp.zip" "s3://$ArtifactBucketName/webapp/webapp_$WebappVersion.zip"
-
-# create build directory of .aws-sam
-sam build
-
-# create zip from .aws-sam and upload zip to S3
-sam package \
-    --s3-bucket $TempBucket \
-    --s3-prefix $StackName \
-    --output-template-file .aws-sam/sam-template.tmp \
-    --region $Region \
-    --force-upload
-    
 # deploy to CloudFormation
+PackagedTemplateS3Object=$ArtifactBucketPrefix/packaged-template.yaml
+FrontendArtifactBucketObject="$ArtifactBucketPrefix/webapp.zip"
+
 aws cloudformation $Action \
     --capabilities CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM \
-    --parameters ParameterKey=ArtifactBucketName,ParameterValue=$ArtifactBucketName ParameterKey=WebappVersion,ParameterValue=$WebappVersion \
+    --parameters ParameterKey=FrontendArtifactBucketName,ParameterValue=$ArtifactBucketName ParameterKey=FrontendArtifactBucketObject,ParameterValue=$FrontendArtifactBucketObject \
     --stack-name $StackName \
     --region $Region \
-    --template-body file://.aws-sam/sam-template.tmp
+    --template-url https://s3.amazonaws.com/$ArtifactBucketName/$PackagedTemplateS3Object
+
 
 echo "Waiting for operation to complete..." && \
 

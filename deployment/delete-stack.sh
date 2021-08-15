@@ -17,10 +17,12 @@ Region=$1
 StackName=$2
 
 # perform delete operation
-aws cloudformation wait stack-delete-complete \
+aws cloudformation delete-stack \
     --region $Region \
     --stack-name $StackName
 
+echo "Waiting for operation to complete..." && \
+    
 # wait for delete operation to complete
 aws cloudformation wait stack-delete-complete \
     --region $Region \
