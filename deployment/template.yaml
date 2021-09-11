@@ -44,7 +44,22 @@ Resources:
   FrontendBucket:
     Type: AWS::S3::Bucket
     Properties:
-        AccessControl: Private
+        AccessControl: PublicRead
+        CorsConfiguration:
+            CorsRules:
+              - AllowedHeaders:
+                  - '*'
+                AllowedMethods:
+                  - GET
+                  - HEAD
+                AllowedOrigins:
+                  - '*'
+                ExposedHeaders:
+                  - Access-Control-Allow-Headers
+                  - Access-Control-Allow-Methods
+                  - Access-Control-Allow-Origin
+                Id: myCORSRuleId1
+                MaxAge: 3600
         BucketName: !Sub ${AWS::StackName}-qrar-frontend-bucket
         Tags:
             - Key: description
@@ -82,6 +97,11 @@ Resources:
             DomainName: !Sub '${FrontendBucket}.s3.amazonaws.com'
             S3OriginConfig:
               OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginIdentity}'
+            OriginCustomHeaders:
+            - HeaderName: origin
+              HeaderValue: foobar
+            - HeaderName: Access-Control-Request-Headers
+              HeaderValue: X-Requested-With
           - Id: Api-shorten-url
             DomainName: !Sub '${QrarApi}.execute-api.${AWS::Region}.amazonaws.com'
             OriginPath: '/Prod'
