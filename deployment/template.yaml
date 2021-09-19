@@ -123,7 +123,7 @@ Resources:
           ViewerProtocolPolicy: redirect-to-https
         DefaultRootObject: 'index.html'
         CustomErrorResponses:
-        - ErrorCode: 403
+        - ErrorCode: 404
           ResponsePagePath: "/index.html"
           ResponseCode: 200
         CacheBehaviors:
