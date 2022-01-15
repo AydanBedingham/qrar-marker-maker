@@ -1,6 +1,7 @@
 # QRAR Marker Maker
 
 Website that allows users to generate Augmented Reality experiences via QR Codes (QRAR's).
+
 Demo URL: [https://d1y78bf5vkymx4.cloudfront.net](https://d1y78bf5vkymx4.cloudfront.net/)
 
 ## Experience Highlights
@@ -13,4 +14,4 @@ Demo URL: [https://d1y78bf5vkymx4.cloudfront.net](https://d1y78bf5vkymx4.cloudfr
 
 ## AWS Quick-Create Link
 Quick-Create link for latest stable release.
-To Deploy [Click here](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/review?stackName=qrar1&templateURL=https://qrar-prod-releases.s3.amazonaws.com/release/1.00/packaged-template.yaml&param_FrontendArtifactBucketName=qrar-prod-releases&param_FrontendArtifactBucketObject=release/1.00/webapp.zip)
+To Deploy [Click here](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/review?stackName=qrar1&templateURL=https://qrar-prod-releases.s3.amazonaws.com/releases/1.00/packaged-template.yaml&param_FrontendArtifactBucketName=qrar-prod-releases&param_FrontendArtifactBucketObject=release/1.00/webapp.zip)
