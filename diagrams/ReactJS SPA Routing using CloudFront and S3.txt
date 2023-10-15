@@ -1,0 +1,27 @@
+title ReactJS SPA Routing using CloudFront and S3
+
+
+==Request 1: Requesting page for the first time==
+Client->CloudFront:Request url "/about"
+CloudFront->Cache:
+Cache->Cache: Check Cache for "/about"
+Cache-->CloudFront:Not found
+space
+CloudFront->S3: Request file "about"
+S3-->CloudFront:Response: 404 (File not found)
+space
+CloudFront->CloudFront:Custom Error Response url "index.html"
+space
+CloudFront->S3: Request file "index.html"
+S3-->CloudFront:Return index.html
+space
+CloudFront->Cache:Cache response for "/about" (index.html)
+Cache-->CloudFront:
+CloudFront-->Client: Response for "/about" url (index.html)
+space
+==Request 2: Subsequent request for the same page==
+Client->CloudFront:Request url "/about"
+CloudFront->Cache:
+Cache->Cache: Check Cache for "/about"
+Cache-->CloudFront:Return cached response for "/about" (index.html)
+CloudFront-->Client: Response for "/about" url (index.html)
